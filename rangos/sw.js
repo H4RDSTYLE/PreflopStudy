@@ -1,19 +1,19 @@
-const CACHE_NAME = 'ps-rangos-v18';
+﻿const CACHE_NAME = 'ps-rangos-v19';
 const FILES_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './css/app.css?v=17',
-  './js/hands.js?v=17',
-  './js/ranges.js?v=17',
-  './js/sizings.js?v=17',
-  './js/data.js?v=17',
-  './js/scenario.js?v=17',
-  './js/modes.js?v=17',
-  './js/editor.js?v=17',
-  './js/study.js?v=17',
-  './js/stats.js?v=17',
-  './js/app.js?v=17',
+  './css/app.css?v=18',
+  './js/hands.js?v=18',
+  './js/ranges.js?v=18',
+  './js/sizings.js?v=18',
+  './js/data.js?v=18',
+  './js/scenario.js?v=18',
+  './js/modes.js?v=18',
+  './js/editor.js?v=18',
+  './js/study.js?v=18',
+  './js/stats.js?v=18',
+  './js/app.js?v=18',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];

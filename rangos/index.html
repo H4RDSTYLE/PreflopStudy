@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0f1420">
-<meta name="description" content="PreflopStudy Rangos &#183; editor de rangos preflop y flashcards con mezclas y límites">
+<meta name="description" content="PreflopStudy Rangos &#183; editor de rangos preflop y flashcards con mezclas y lÃ­mites">
 <title>PreflopStudy Rangos</title>
-<link rel="manifest" href="./manifest.json?v=17">
+<link rel="manifest" href="./manifest.json?v=18">
 <link rel="icon" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./css/app.css?v=17">
+<link rel="stylesheet" href="./css/app.css?v=18">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
   <div class="logo">Preflop<span>Study</span></div>
   <span class="badge">Rangos</span>
   <div class="spacer"></div>
-  <a href="../index.html" class="hbtn">Visor imágenes</a>
+  <a href="../index.html" class="hbtn">Visor imÃ¡genes</a>
 </header>
 
 <main>
@@ -31,7 +31,7 @@
       <button class="hbtn" id="btnExport" title="Descargar copia de seguridad">Exportar JSON</button>
       <button class="hbtn" id="btnImport" title="Importar copia de seguridad">Importar</button>
       <input type="file" id="importFile" accept=".json" hidden>
-      <div class="muted" style="font-size:12px; line-height:1.5">Toca una situación para editar su matriz 13 &#215; 13 (varias acciones por mano con %).</div>
+      <div class="muted" style="font-size:12px; line-height:1.5">Toca una situaciÃ³n para editar su matriz 13 &#215; 13 (varias acciones por mano con %).</div>
     </div>
     <div id="rangeList"></div>
   </div>
@@ -66,14 +66,14 @@
     </div>
 
     <div class="card">
-      <h3>Notación de texto <span class="muted" style="font-weight:400; font-size:12px">(se sincroniza con la matriz)</span></h3>
+      <h3>NotaciÃ³n de texto <span class="muted" style="font-weight:400; font-size:12px">(se sincroniza con la matriz)</span></h3>
       <p class="muted" style="font-size:12px; margin-bottom:8px">
-        Formato: <code style="color:var(--accent)">A9s: 3bet all-in 50%, 3bet no allin 50%</code> ·
-        <code style="color:var(--accent)">88-77: call 100%</code> · <code style="color:var(--accent)">A2s+: raise 100%</code>
+        Formato: <code style="color:var(--accent)">A9s: 3bet all-in 50%, 3bet no allin 50%</code> Â·
+        <code style="color:var(--accent)">88-77: call 100%</code> Â· <code style="color:var(--accent)">A2s+: raise 100%</code>
       </p>
       <textarea id="notacion" class="notacion" spellcheck="false"></textarea>
       <div style="margin-top:8px; display:flex; gap:8px">
-        <button class="hbtn primary" id="btnApplyNot">Aplicar notación</button>
+        <button class="hbtn primary" id="btnApplyNot">Aplicar notaciÃ³n</button>
         <button class="hbtn" id="btnResetEd">Restablecer rango</button>
       </div>
     </div>
@@ -81,7 +81,7 @@
 
   <!-- ===== SIZINGS ===== -->
   <div class="view" id="view-sizings">
-    <div class="banner">Configura el tamaño en BB de cada situación según el stack. Modo <b>bb</b> = tamaño fijo en BB ·
+    <div class="banner">Configura el tamaÃ±o en BB de cada situaciÃ³n segÃºn el stack. Modo <b>bb</b> = tamaÃ±o fijo en BB Â·
       modo <b>x</b> = multiplicador del open raise. Las filas <b>All-in</b> representan stack efectivo (no edite el modo).</div>
     <div class="card" style="padding:8px">
       <div style="overflow-x:auto"><table class="siz" id="sizingsTable"></table></div>
@@ -99,7 +99,7 @@
   <div class="view" id="view-progreso">
     <div class="row" style="margin-bottom:14px" id="progGlobal"></div>
     <div class="card">
-      <h3>Por situación</h3>
+      <h3>Por situaciÃ³n</h3>
       <div id="progList"></div>
     </div>
     <button class="hbtn" id="btnResetStats" style="color:#ff8a80">Borrar progreso</button>
@@ -135,7 +135,7 @@
     <option value="polar"></option>
     <option value="linear"></option>
   </datalist>
-  <button class="hbtn" id="sheetAddLine" style="margin:4px 0 12px">+ Añadir línea</button>
+  <button class="hbtn" id="sheetAddLine" style="margin:4px 0 12px">+ AÃ±adir lÃ­nea</button>
   <div class="sum-row ok" id="sheetSumRow">
     <span class="muted">Total</span><b id="sheetSum">0%</b>
   </div>
@@ -157,15 +157,15 @@
 .qanswer-info .hidden{display:none;}
 </style>
 
-<script src="./js/hands.js?v=17"></script>
-<script src="./js/ranges.js?v=17"></script>
-<script src="./js/sizings.js?v=17"></script>
-<script src="./js/data.js?v=17"></script>
-<script src="./js/scenario.js?v=17"></script>
-<script src="./js/modes.js?v=17"></script>
-<script src="./js/stats.js?v=17"></script>
-<script src="./js/study.js?v=17"></script>
-<script src="./js/editor.js?v=17"></script>
-<script src="./js/app.js?v=17"></script>
+<script src="./js/hands.js?v=18"></script>
+<script src="./js/ranges.js?v=18"></script>
+<script src="./js/sizings.js?v=18"></script>
+<script src="./js/data.js?v=18"></script>
+<script src="./js/scenario.js?v=18"></script>
+<script src="./js/modes.js?v=18"></script>
+<script src="./js/stats.js?v=18"></script>
+<script src="./js/study.js?v=18"></script>
+<script src="./js/editor.js?v=18"></script>
+<script src="./js/app.js?v=18"></script>
 </body>
 </html>
