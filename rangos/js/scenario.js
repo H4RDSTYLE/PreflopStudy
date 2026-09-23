@@ -204,10 +204,11 @@ function buildScene(id) {
       return { intro: `SB vs BB · Stack ${info.stack}`, hero: 'SB', seats, seq, decisión: 'Limpear / abrir / all-in' };
     }
     case 'SBBR': {
+      const ris = (r && r.sizes && r.sizes.raise) || fmtBb(getSizing('rol', stackFromLabel(r.stack || r.label)).val);
       seq.push({ player: 'SB', text: 'limpeas 0,5bb', hero: true });
       seat('SB', 'limp 0,5', 'hero');
-      seq.push({ player: 'BB', text: 'sube 3bb' });
-      seat('BB', 'sube 3bb');
+      seq.push({ player: 'BB', text: `sube a ${ris}`, hero: false });
+      seat('BB', `sube a ${ris}`);
       seq.push({ player: 'SB', text: 'tú decides', hero: true });
       return { intro: `SB vs BB tras rol · Stack ${info.stack}`, hero: 'SB', seats, seq, decisión: 'Responder al rol del BB' };
     }

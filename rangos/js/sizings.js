@@ -8,6 +8,7 @@ const STACKS = [15, 20, 30, 40, 50, 75];
 /* Situaciones de sizing (filas) */
 const SIZING_ROWS = [
   { key: 'OR',        label: 'Open Raise',        allin: false },
+  { key: 'rol',       label: 'Rol BB vs Limp',    allin: false },
   { key: '3bet_ip',   label: '3bet IP',           allin: false },
   { key: '3bet_oop',  label: '3bet OOP',          allin: false },
   { key: 'sqz_ip',    label: 'Squeeze IP',        allin: false },
@@ -24,6 +25,7 @@ const SIZING_KEY = 'ps_sizings_v1';
 /* Defaults: modo 'bb' (BB fijos) o 'x' (multiplicador del open) */
 const SIZING_DEFAULTS = {
   OR:        { mode: 'bb', val: 2.2 },
+  rol:       { mode: 'bb', val: 2.5 },
   '3bet_ip': { mode: 'x',  val: 3 },
   '3bet_oop':{ mode: 'x',  val: 3.5 },
   'sqz_ip':  { mode: 'x',  val: 4 },
