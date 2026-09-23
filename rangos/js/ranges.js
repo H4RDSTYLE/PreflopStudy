@@ -18,9 +18,32 @@ function saveRanges() {
 function ensureDefaults() {
   if (RANGES) return;
   const stored = loadRanges();
-  if (stored && Object.keys(stored).length) { RANGES = stored; return; }
+  if (stored && Object.keys(stored).length) {
+    RANGES = migrateStoredRanges(stored);
+    return;
+  }
   RANGES = buildDefaultRanges();
   saveRanges();
+}
+
+/* Migración: spots 'SB vs BB Rol' (u_sbbr_*) que quedaron guardados con el
+   sizing/opción del OR (call 0,5bb = limp). El call real al rol es 2bb.
+   Conserva la matriz editada del usuario; solo re-aplica sizing y tamaño. */
+function migrateStoredRanges(stored) {
+  let changed = false;
+  Object.entries(stored).forEach(([id, r]) => {
+    if (!id.startsWith('u_sbbr_') || !r) return;
+    if (r.sizing === 'OR' && r.sizes && r.sizes.call === 0.5) {
+      r.sizing = 'rol';
+      r.sizes = { call: 2 };
+      changed = true;
+    }
+  });
+  if (changed) {
+    RANGES = stored;
+    saveRanges();
+  }
+  return stored;
 }
 
 function getRange(id) { return RANGES[id] || null; }
