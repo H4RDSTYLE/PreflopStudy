@@ -5,15 +5,15 @@
    ========================================================= */
 
 const SEAT_COORDS = {
-  BB:    { left: '45%', top: '80%' },
-  SB:    { left: '74%', top: '79%' },
-  BTN:   { left: '82%', top: '24%' },
-  CO:    { left: '63%', top: '7%'  },
-  HJ:    { left: '49%', top: '7%'  },
-  LJ:    { left: '30%', top: '9%'  },
-  UTG:   { left: '7%',  top: '40%' },
-  'UTG+1': { left: '13%', top: '21%' },
-  EP:    { left: '7%',  top: '55%' },
+  BB:    { left: '43%', top: '86%' },
+  SB:    { left: '76%', top: '82%' },
+  BTN:   { left: '86%', top: '30%' },
+  CO:    { left: '64%', top: '12%' },
+  HJ:    { left: '50%', top: '10%' },
+  LJ:    { left: '31%', top: '13%' },
+  UTG:   { left: '8%',  top: '46%' },
+  'UTG+1': { left: '15%', top: '27%' },
+  EP:    { left: '8%',  top: '62%' },
 };
 
 function posLabel(pos) {
@@ -36,6 +36,13 @@ const _POSM = { utg: 'UTG', utg_1: 'UTG+1', lj: 'LJ', hj: 'HJ', co: 'CO', btn: '
 /* Orden de actuación en la mesa (de early a BB) */
 const ROW = ['UTG', 'UTG+1', 'LJ', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
 
+/* Convierte el código de stack de un id en etiqueta legible (1020 → 10-20bb) */
+function stackLabel(code) {
+  const map = { 1020: '10-20bb', 3040: '30-40bb', 1012: '10-12bb', 2025: '20-25bb', 50: '50bb', 40: '40bb', 35: '30-40bb', 30: '30bb', 22: '20-25bb', 20: '20bb', 15: '15bb', 11: '10-12bb' };
+  const k = String(code).replace(/bb$/, '');
+  return map[k] || (k === String(code) ? code : k + 'bb');
+}
+
 function parseSid(id) {
   if (/^uor_/.test(id)) {
     const m = id.match(/^uor_([^_]+(?:_\d)?)_(.+)$/);
@@ -57,7 +64,7 @@ function parseSid(id) {
   if ((m = id.match(/^u_v4bet_(.+)$/))) return { type: 'VS4B', hero: 'BTN', stack: m[1] };
   if ((m = id.match(/^u_vsqz_(.+)$/))) return { type: 'VSQ', hero: 'BTN', stack: m[1] };
   if ((m = id.match(/^u_sqz_(bb|sb|btn|co)_(.+?)(?:_(lj|hj|co|btn))?$/))) {
-    return { type: 'SQZ', hero: _POSM[m[1]], opener: m[3] ? _POSM[m[3]] : null, stack: m[2] };
+    return { type: 'SQZ', hero: _POSM[m[1]], opener: m[3] ? _POSM[m[3]] : null, stack: stackLabel(m[2]), stackRaw: m[2] };
   }
   if ((m = id.match(/^u_sbb_(.+)$/))) return { type: 'SBB', hero: 'SB', stack: m[1] };
   if ((m = id.match(/^u_sbbr_(.+)$/))) return { type: 'SBBR', hero: 'SB', stack: m[1] };
@@ -95,7 +102,7 @@ function buildScene(id) {
       seq.push({ player: H, text: 'tú decides (abrir o retirarte)', hero: true });
       seat(H, 'TÚ', 'hero');
       return {
-        intro: `Tú en ${posLabel(H)} · pila ${info.stack} (${fmtBb(r ? r.stack : info.stack)})`,
+        intro: `Tú en ${posLabel(H)} · Stack ${info.stack} (ref ${fmtBb(r ? r.stack : info.stack)})`,
         hero: H, seats, seq,
         decisión: `Abrir (Bet ${oSz}) o retirarte`,
       };
@@ -114,7 +121,7 @@ function buildScene(id) {
       seat(H, 'TÚ', 'hero');
       const call = (r && r.sizes && r.sizes.call) || 2;
       return {
-        intro: `vs OR de ${posLabel(op)} · Tú en ${posLabel(H)} · pila ${info.stack}`,
+        intro: `vs OR de ${posLabel(op)} · Tú en ${posLabel(H)} · Stack ${info.stack}`,
         hero: H, seats, seq,
         decisión: `Defender (Call ${fmtBb(call)} / 3bet ${sz3}) o retirarte`,
       };
@@ -134,7 +141,7 @@ function buildScene(id) {
       seq.push({ player: 'BB', text: 'tú decides', hero: true });
       seat('BB', 'TÚ', 'hero');
       const call = (r && r.sizes && r.sizes.call) || 2;
-      return { intro: `SB abre, tú en BB · pila ${info.stack}`, hero: 'BB', seats, seq, decisión: `Call ${fmtBb(call)} / 3bet ${sz3} o fold` };
+      return { intro: `SB abre, tú en BB · Stack ${info.stack}`, hero: 'BB', seats, seq, decisión: `Call ${fmtBb(call)} / 3bet ${sz3} o fold` };
     }
     case 'VS3B': {
       const H = info.hero; // IP=BTN · OOP=CO (abre el que sufrió el 3bet)
@@ -146,7 +153,7 @@ function buildScene(id) {
       seat(op, `3bet ${sz3}`);
       seq.push({ player: H, text: 'tú decides', hero: true });
       return {
-        intro: `vs 3Bet ${info.ip ? 'IP' : 'OOP'} · tú en ${posLabel(H)} · pila ${info.stack}`,
+        intro: `vs 3Bet ${info.ip ? 'IP' : 'OOP'} · tú en ${posLabel(H)} · Stack ${info.stack}`,
         hero: H, seats, seq, decisión: 'Responder al 3bet',
       };
     }
@@ -159,7 +166,7 @@ function buildScene(id) {
       seq.push({ player: 'BTN', text: 'tú 4beteas', hero: true });
       seq.push({ player: 'BB', text: '5betea all-in' });
       seq.push({ player: 'BTN', text: 'tú decides', hero: true });
-      return { intro: `vs 4Bet · pila ${info.stack}`, hero: 'BTN', seats, seq, decisión: 'Continuar frente al 4bet/5bet' };
+      return { intro: `vs 4Bet · Stack ${info.stack}`, hero: 'BTN', seats, seq, decisión: 'Continuar frente al 4bet/5bet' };
     }
     case 'VSQ': {
       // BTN abre IP, SB paga, BB squeeze (3bet)
@@ -170,7 +177,7 @@ function buildScene(id) {
       seq.push({ player: 'BB', text: `squeeze 3betea ${sz3}` });
       seat('BB', `3bet ${sz3}`);
       seq.push({ player: 'BTN', text: 'tú decides', hero: true });
-      return { intro: 'Tú sufres el Squeeze · pila ' + info.stack, hero: 'BTN', seats, seq, decisión: 'Responder al Squeeze' };
+      return { intro: 'Tú sufres el Squeeze · Stack ' + info.stack, hero: 'BTN', seats, seq, decisión: 'Responder al Squeeze' };
     }
     case 'SQZ': {
       const H = info.hero;
@@ -187,13 +194,14 @@ function buildScene(id) {
       }
       seq.push({ player: H, text: 'tú decides', hero: true });
       seat(H, 'TÚ', 'hero');
-      return { intro: `Squeeze desde ${posLabel(H)} · pila ${info.stack}`, hero: H, seats, seq, decisión: 'Squeeze, igualar o retirarte' };
+      const vsTxt = opn ? ` vs OR ${posLabel(opn)}` : '';
+      return { intro: `Squeeze desde ${posLabel(H)}${vsTxt} · Stack ${info.stack}`, hero: H, seats, seq, decisión: 'Squeeze (all-in), igualar o retirarte' };
     }
     case 'SBB': {
       seq.push({ player: 'SB', text: 'tú decides (limpear/abrir)', hero: true });
       seat('SB', 'TÚ', 'hero');
       seat('BB', '—');
-      return { intro: `SB vs BB · pila ${info.stack}`, hero: 'SB', seats, seq, decisión: 'Limpear / abrir / all-in' };
+      return { intro: `SB vs BB · Stack ${info.stack}`, hero: 'SB', seats, seq, decisión: 'Limpear / abrir / all-in' };
     }
     case 'SBBR': {
       seq.push({ player: 'SB', text: 'limpeas 0,5bb', hero: true });
@@ -201,7 +209,7 @@ function buildScene(id) {
       seq.push({ player: 'BB', text: 'sube 3bb' });
       seat('BB', 'sube 3bb');
       seq.push({ player: 'SB', text: 'tú decides', hero: true });
-      return { intro: `SB vs BB tras rol · pila ${info.stack}`, hero: 'SB', seats, seq, decisión: 'Responder al rol del BB' };
+      return { intro: `SB vs BB tras rol · Stack ${info.stack}`, hero: 'SB', seats, seq, decisión: 'Responder al rol del BB' };
     }
     case 'SB3BB': {
       seq.push({ player: 'SB', text: 'abres (o pagas)', hero: true });
@@ -216,7 +224,7 @@ function buildScene(id) {
       seat('SB', 'limp 0,5');
       seq.push({ player: 'BB', text: 'tú decides', hero: true });
       seat('BB', 'TÚ', 'hero');
-      return { intro: `BB vs SB Limp · pila ${info.stack}`, hero: 'BB', seats, seq, decisión: 'Chequear o subir (Rol)' };
+      return { intro: `BB vs SB Limp · Stack ${info.stack}`, hero: 'BB', seats, seq, decisión: 'Chequear o subir (Rol)' };
     }
     default: {
       const H = info.hero || 'BB';

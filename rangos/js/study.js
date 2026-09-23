@@ -10,6 +10,8 @@ let session = null;
    'limite_y_dentro' -> 65% límites / 35% dentro
    'dentro'   -> solo manos claramente dentro
    'todo'     -> todo el rango ponderado
+   cfg.missesOnly -> solo manos con algún fallo registrado
+   cfg.limit  -> tope de preguntas (máx. 50 desde la UI)
 */
 function buildPool(sitIds, mode) {
   const pool = [];
@@ -69,7 +71,12 @@ function buildSession(cfg) {
   const mode = cfg.mode;
   const limit = parseInt(cfg.limit, 10) || 0;
 
-  const pool = pickHandPool(mode, sitIds);
+  let pool = pickHandPool(mode, sitIds);
+
+  // 'Solo falladas': únicamente manos con al menos un fallo registrado
+  if (cfg.missesOnly) {
+    pool = pool.filter(p => getStat(p.sitId, p.hand).bad > 0);
+  }
 
   if (cfg.prioritize) {
     // shuffled ponderado por fallos
@@ -86,7 +93,10 @@ function buildSession(cfg) {
   });
 
   // cadenas: abrir -> enfrentar un 3bet (misma mano, dos preguntas seguidas)
-  session.list = session.list.concat(buildChainEntries(cfg.chains || 0));
+  if (!cfg.missesOnly) {
+    session.list = session.list.concat(buildChainEntries(cfg.chains || 0));
+    if (limit > 0 && session.list.length > limit) session.list = session.list.slice(0, limit);
+  }
   return session;
 }
 
@@ -162,11 +172,21 @@ function answerLines(entry) {
 }
 
 function isCorrectOption(entry, chosenAction, chosenTag) {
-  if (!entry.lines.some(l => l.action === chosenAction && l.freq > 0)) return false;
-  if (chosenTag && Number.isFinite(Number(chosenTag))) {
+  const rLines = entry.lines.filter(l => l.action === chosenAction && l.freq > 0);
+  if (!rLines.length) return false;
+  const t = String(chosenTag == null ? '' : chosenTag);
+  const WANT_AI = t === 'ai' || /all-in|allin/i.test(t);
+  const hasAI = rLines.some(l => l.action === 'jam' || /all-in|allin/i.test(l.tag || ''));
+  const hasSized = rLines.some(l => l.action !== 'jam' && !/all-in|allin/i.test(l.tag || ''));
+  if (WANT_AI) return hasAI;
+  if (t === 'size') return hasSized;
+  if (t === '') return true;
+  if (Number.isFinite(Number(t))) {
+    if (!hasSized) return false;
     const r = getRange(entry.sitId);
     const sz = r && r.sizes ? r.sizes[chosenAction] : null;
-    if (sz != null && Math.abs(Number(chosenTag) - Number(sz)) > 1e-9) return false;
+    if (sz != null && Math.abs(Number(t) - Number(sz)) > 1e-9) return false;
+    return true;
   }
   return true;
 }

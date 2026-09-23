@@ -94,6 +94,9 @@ function stackFromLabel(label) {
 /* Texto legible del sizing de una situación */
 function formatSizingFor(sit) {
   ensureSizings();
+  // si el rango juega la acción principal como all-in (p. ej. squeezes en stack corto)
+  const ai = rangeAllInFor(sit);
+  if (ai) return `All-in (${fmtBB(ai.stack)}bb)`;
   const rowKey = situSizingKey(sit);
   const stack = stackFromLabel(sit.stack || sit.label);
   const sz = getSizing(rowKey, stack);
@@ -104,6 +107,22 @@ function formatSizingFor(sit) {
   const base = open.mode === 'bb' ? open.val : 2.2;
   const total = sz.val * base;
   return `${sz.val}x  (${fmtBB(total)}bb)`;
+}
+
+/* ¿El rango juega su acción principal como all-in?
+   Mira las líneas no-fold con tag 'all-in' o acción 'jam' ponderadas por frecuencia. */
+function rangeAllInFor(sit) {
+  if (!sit || !sit.matrix) return null;
+  let allFreq = 0, aiFreq = 0, stack = sit.stack;
+  Object.values(sit.matrix).forEach(lines => {
+    lines.forEach(l => {
+      if (l.action === 'fold' || !(l.freq > 0)) return;
+      allFreq += l.freq;
+      if (l.action === 'jam' || /all-in|allin/.test(String(l.tag || ''))) aiFreq += l.freq;
+    });
+  });
+  if (allFreq > 0 && aiFreq / allFreq >= 0.5) return { stack };
+  return null;
 }
 
 function situSizingKey(sit) {

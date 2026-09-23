@@ -17,6 +17,60 @@ function sizeLabel(r, a) {
   return ACTION_NAME[a] || a;
 }
 
+/* Texto "Nx (totalbb)" del sizing configurado para una situación (sin el override all-in) */
+function sizingRowTextFor(r) {
+  ensureSizings();
+  const rowKey = situSizingKey(r);
+  const stack = stackFromLabel(r.stack || r.label);
+  const sz = getSizing(rowKey, stack);
+  const row = SIZING_ROWS.find(x => x.key === rowKey);
+  if (row && row.allin) return `All-in (${sz.val}bb)`;
+  if (sz.mode === 'bb') return `${fmtBB(sz.val)}bb`;
+  const open = getSizing('OR', stack);
+  const base = open.mode === 'bb' ? open.val : 2.2;
+  const total = sz.val * base;
+  return `${sz.val}x (${fmtBB(total)}bb)`;
+}
+
+/* Opciones de tamaño para la acción principal correcta, incluida la alternativa (all-in vs Nx)
+   que es difícil de identificar en esa situación. */
+function sizeVariantsFor(r, dom) {
+  const RAISE = ['raise', '3bet', '4bet', 'sqz', 'jam'];
+  if (!dom || !RAISE.includes(dom.action)) return [{ tag: '', label: sizeLabel(r, dom.action) }];
+  const name = ACTION_NAME[dom.action] || dom.action;
+  const s = (r && r.sizes) || {};
+  const isAI = /all-in|allin/.test(dom.tag || '') || dom.action === 'jam';
+  const out = [{
+    tag: isAI ? 'ai' : '',
+    label: isAI
+      ? (dom.action === 'jam' ? sizeLabel(r, dom.action) : `${name} all-in`)
+      : sizeLabel(r, dom.action)
+  }];
+  if (dom.action === 'jam') return out;
+  const bb = s[dom.action];
+  if (isAI) {
+    // distractor: el tamaño normal (p.ej. Squeeze 4x) — difícil de identificar frente al all-in
+    out.push({ tag: 'size', label: `${name} ${sizingRowTextFor(r)}` });
+    return out;
+  }
+  if (dom.action === 'sqz' || dom.action === '3bet' || dom.action === '4bet') {
+    // las dos apuestas difíciles: tamaño normal vs all-in
+    out.push({ tag: 'ai', label: `${name} all-in` });
+    return out;
+  }
+  if (dom.action === 'raise') {
+    const alt = Number(bb) >= 2.2 ? 2 : 2.2;
+    if (alt != null && Math.abs(alt - Number(bb)) > 1e-9) out.push({ tag: String(alt), label: `${name} ${fmtBB(alt)}bb` });
+  } else if (bb != null && Number(bb) > 0) {
+    const step = Number(bb) >= 5 ? 1 : 0.2;
+    const alt = Math.round((Number(bb) + step) * 10) / 10;
+    if (Math.abs(alt - Number(bb)) > 1e-9) out.push({ tag: String(alt), label: `${name} ${fmtBB(alt)}bb` });
+  } else if (sizingRowTextFor(r) !== `${name} all-in`) {
+    out.push({ tag: 'size', label: `${name} ${sizingRowTextFor(r)}` });
+  }
+  return out;
+}
+
 function showView(name) {
   const v = document.getElementById(ACTIVE_VIEW + name);
   if (!name) return;
@@ -142,16 +196,18 @@ function renderStudy(isSetup) {
             ${cats.map(c => `<button class="chip" data-c="${escAttr(c)}">${esc(c)}</button>`).join('')}
           </div>
         </div>
-        <div class="fgroup">
-          <label>Nº de preguntas / spots</label>
-          <select id="stLimit">
-            <option value="0">Todas</option>
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-          </select>
-        </div>
+<div class="fgroup">
+            <label>Nº de preguntas / spots (máx. 50)</label>
+            <select id="stLimit">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50" selected>50</option>
+            </select>
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);">
+            <input type="checkbox" id="stMisses"> Solo las manos que fallé antes
+          </label>
         <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted);">
           <input type="checkbox" id="stPriority" checked> Priorizar lo que peor recuerdo
         </label>
@@ -197,9 +253,11 @@ function renderStudy(isSetup) {
         renderRafaga();
         return;
       }
+      const misses = stage.querySelector('#stMisses').checked;
       const cfg = Object.assign({}, cfgCommon, {
         mode: stage.querySelector('#stMode').value,
-        chains: stage.querySelector('#stChains').checked ? 3 : 0,
+        chains: stage.querySelector('#stChains').checked && !misses ? 3 : 0,
+        missesOnly: misses,
       });
       buildSession(cfg);
       if (session.list.length === 0) return toast('No hay manos para estudiar en ese filtro');
@@ -239,15 +297,9 @@ function renderCard() {
   correctActs.forEach(a => { if (!base.includes(a)) base.push(a); });
   const ordered = [...new Set(base.filter(a => a !== 'fold')), ...(base.includes('fold') ? ['fold'] : [])];
 
-  // tamaño alterno como distractor del tamaño real de la acción principal
+  // tamaño(s) alternos como distractor de la acción principal (p.ej. squeeze 4x vs all-in)
   const domino = lines.filter(l => l.freq > 0).sort((a, b) => b.freq - a.freq)[0];
-  const realSize = domino && r.sizes && r.sizes[domino.action];
-  let altSize = null;
-  if (realSize != null && Number.isFinite(Number(realSize)) && Number(realSize) > 0 && domino.action !== 'jam') {
-    const step = Number(realSize) >= 5 ? 1 : 0.2;
-    const alt = Math.round((Number(realSize) + step) * 10) / 10;
-    if (Math.abs(alt - Number(realSize)) > 1e-9) altSize = alt;
-  }
+  const variants = sizeVariantsFor(r, domino);
 
   const cards = entry.cards.map(c =>
     `<div class="pc ${cardRed(c) ? 'red' : ''}">${c[0]}<span class="suit">${cardSuitSym(c)}</span></div>`).join('');
@@ -276,7 +328,7 @@ function renderCard() {
 
   stage.innerHTML = `
     <div class="qbar"><div class="fill" style="width:${Math.round(session.idx / session.list.length * 100)}%"></div></div>
-    <div class="qpath"><b>${session.idx + 1}</b> / ${session.list.length} · <span id="qCounts">${session.cnt.ok} ✓ ${session.cnt.warn} ~ ${session.cnt.bad} ✗</span></div>
+    <div class="qpath"><b>${session.idx + 1}</b> / ${session.list.length} · <span id="qCounts">${session.cnt.ok} ✓ ${session.cnt.bad} ✗</span></div>
     <div class="qcard">
       ${chainBadge}
       <div class="qspot">${esc(r.label)}</div>
@@ -291,23 +343,17 @@ function renderCard() {
     </div>
     <div class="qanswers" id="qans"></div>
     <div class="qanswer-info hidden" id="qaf"></div>
-    <div class="qgrades hidden" id="qgrades">
-      <button class="g1" data-g="bad">1 · No lo sabía</button>
-      <button class="g2" data-g="warn">2 · Casi</button>
-      <button class="g3" data-g="ok">3 · ¡Clavada!</button>
-    </div>`;
+    <div class="qgrades hidden" id="qgrades"></div>`;
 
   const box = document.getElementById('qans');
   const optHTML = [];
   ordered.forEach(action => {
-    optHTML.push(`<button data-a="${escAttr(action)}" data-t="">
-      <span>${sizeLabel(r, action)}</span>
-    </button>`);
-    if (altSize != null && action === domino.action) {
-      optHTML.push(`<button data-a="${escAttr(action)}" data-t="${fmtBB(altSize)}">
-        <span>${ACTION_NAME[action]} ${fmtBB(altSize)}bb</span>
+    const list = action === domino.action ? variants : [{ tag: '', label: sizeLabel(r, action) }];
+    list.forEach(v => {
+      optHTML.push(`<button data-a="${escAttr(action)}" data-t="${escAttr(v.tag)}">
+        <span>${esc(v.label)}</span>
       </button>`);
-    }
+    });
   });
   box.innerHTML = optHTML.join('');
 
@@ -345,32 +391,34 @@ function pickAnswer(entry, btn) {
   if (stats && stats.n > 0) {
     const gp = document.getElementById('qgrades');
     gp.insertAdjacentHTML('beforebegin',
-      `<div class="qanswer-stats">En esta mano: ${stats.ok} ✓ ${stats.warn} ~ ${stats.bad} ✗ (${stats.n} veces)</div>`);
+      `<div class="qanswer-stats">En esta mano: ${stats.ok} ✓ ${stats.bad} ✗ (${stats.n} veces)</div>`);
   }
 
-  document.getElementById('qgrades').classList.remove('hidden');
-  const grades = document.querySelectorAll('#qgrades button');
-  grades.forEach(g => {
-    g.onclick = () => {
-      recordGrade(entry.sitId, entry.hand, g.dataset.g);
-      session.cnt[g.dataset.g]++;
-      nextCard();
-      renderCard();
-    };
-  });
+  // auto-corrección binaria: acierto = ok, fallo = bad (sin preguntar 1/2/3)
+  recordGrade(entry.sitId, entry.hand, correct ? 'ok' : 'bad');
+  session.cnt[correct ? 'ok' : 'bad']++;
+
+  // Siguiente: botón manual + avance automático
+  const box2 = document.getElementById('qgrades');
+  box2.classList.remove('hidden');
+  box2.innerHTML =
+    `<button class="g3" style="flex:1" id="qNext">${session.idx + 1 >= session.list.length ? 'Ver resultado' : 'Siguiente ›'}</button>`;
+  const nb = document.getElementById('qNext');
+  const goNext = () => { nb.dataset.done = '1'; nextCard(); renderCard(); };
+  nb.onclick = goNext;
+  setTimeout(() => { if (nb.isConnected && !nb.dataset.done) goNext(); }, 1600);
 }
 
 function renderSummary() {
   const stage = document.getElementById('studyStage');
   const n = session.list.length;
-  const pct = Math.round(((session.cnt.ok + session.cnt.warn * 0.5) / n) * 100);
+  const pct = Math.round(((session.cnt.ok) / n) * 100);
   stage.innerHTML = `
     <div class="qsummary">
       <div class="big">${pct}%</div>
-      <div class="muted">${n} preguntas · ${session.cnt.ok} clavadas · ${session.cnt.warn} casi · ${session.cnt.bad} no sabías</div>
+      <div class="muted">${n} preguntas · ${session.cnt.ok} clavadas · ${session.cnt.bad} falladas</div>
       <div class="nums">
         <div class="num n1"><b>${session.cnt.ok}</b>✓</div>
-        <div class="num n2"><b>${session.cnt.warn}</b>~</div>
         <div class="num n3"><b>${session.cnt.bad}</b>✗</div>
       </div>
       <button class="hbtn primary" id="again" style="margin:0 6px 6px">Repetir sesión</button>
