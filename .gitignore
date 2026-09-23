@@ -1,0 +1,16 @@
+# Navegador de scraping
+.browser-profile/
+
+# Logs y capturas temporales
+latex_run*.log
+_pantalla.png
+
+# Datos intermedios de OCR (no publicar binarios de captura)
+tablas/**/*.jpg
+tablas/**/*.png
+tablas/**/*.jpeg
+!tablas/README.txt
+
+# Node
+node_modules/
+npm-debug.log*

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PreflopStudy - Rangos de póker</title>
+<style>
+:root{
+  --bg:#0f1420; --panel:#161e2d; --panel2:#1b2536; --border:#243049;
+  --text:#dfe7f5; --muted:#8a97b0; --accent:#59dfe6; --accent2:#45ccb9;
+  --btn:#243049; --btn-hover:#2d3b58;
+  --btns:#4fc3f7; --sbs:#ffd54f; --bbs:#ef5350; --ots:#9575cd;
+  --ok:#45ccb9; --warn:#f1cc32; --bad:#ef5350;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(89,223,230,.08), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(69,204,185,.06), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size:15px; line-height:1.45;
+}
+button{font-family:inherit; cursor:pointer; border:none; background:var(--btn); color:var(--text);
+  padding:8px 14px; border-radius:9px; font-size:14px; transition:background .15s, transform .05s;}
+button:hover{background:var(--btn-hover);}
+button:active{transform:scale(.97);}
+select,input[type=text]{
+  background:var(--panel2); color:var(--text); border:1px solid var(--border);
+  border-radius:9px; padding:8px 10px; font-size:14px; font-family:inherit;
+}
+select:focus,input:focus{outline:1px solid var(--accent);}
+h1,h2,h3{font-weight:600;}
+a{color:var(--accent);}
+
+/* ---------- Header ---------- */
+header{
+  display:flex; align-items:center; gap:14px; padding:14px 22px;
+  background:rgba(22,30,45,.85); backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50;
+}
+.logo{font-size:20px; font-weight:800; letter-spacing:.3px;}
+.logo span{color:var(--accent);}
+.spacer{flex:1;}
+.hbtn{background:transparent; border:1px solid var(--border);}
+.hbtn.primary{background:var(--accent); color:#0c121d; font-weight:700;}
+.hbtn.primary:hover{background:#7ce9ef;}
+.badge{background:var(--panel2); border:1px solid var(--border); border-radius:999px;
+  padding:5px 12px; font-size:13px; color:var(--muted);}
+.badge b{color:var(--text); font-weight:700;}
+
+main{max-width:1200px; margin:0 auto; padding:22px;}
+.banner{
+  background:linear-gradient(90deg, rgba(89,223,230,.12), rgba(69,204,185,.07));
+  border:1px solid var(--accent2); color:var(--text); border-radius:12px;
+  padding:14px 18px; margin-bottom:20px; font-size:14px;
+}
+.banner b{color:var(--accent2);}
+
+/* ---------- Filters ---------- */
+.filters{
+  display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;
+  background:var(--panel); border:1px solid var(--border); border-radius:14px;
+  padding:14px 16px; margin-bottom:18px;
+}
+.fgroup{display:flex; flex-direction:column; gap:5px;}
+.fgroup label{font-size:12px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); font-weight:600;}
+.search{flex:1; min-width:180px;}
+.chips{display:flex; gap:6px; flex-wrap:wrap;}
+.chip{
+  padding:6px 12px; border-radius:999px; background:var(--panel2);
+  border:1px solid var(--border); font-size:13px; font-weight:600; color:var(--muted);
+}
+.chip:hover{background:var(--btn-hover);}
+.chip.on{color:#0c121d; border-color:transparent;}
+.chip.on.bbtn{background:var(--btns);}
+.chip.on.sbtn{background:var(--sbs);}
+.chip.on.obtn{background:var(--bbs);}
+.chip.on.ebtn{background:var(--ots);}
+.chip.on.all{background:var(--accent);}
+
+/* ---------- Grid ---------- */
+.gridinfo{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; color:var(--muted); font-size:13px;}
+.grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:14px;
+}
+.card{
+  background:var(--panel); border:1px solid var(--border); border-radius:14px;
+  overflow:hidden; cursor:pointer; transition:transform .12s, border-color .12s;
+}
+.card:hover{transform:translateY(-3px); border-color:var(--accent);}
+.card .thumb{
+  height:190px; display:flex; align-items:center; justify-content:center;
+  background:repeating-conic-gradient(#131a28 0% 25%, #16203233 0% 50%) 0 0/22px 22px;
+  padding:8px;
+}
+.card .thumb img{max-width:100%; max-height:100%; object-fit:contain; border-radius:6px;}
+.card .meta{padding:10px 12px;}
+.card .meta .t{font-weight:700; font-size:14px;}
+.card .meta .sub{color:var(--muted); font-size:12px; margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.posdot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle;}
+.empty{grid-column:1/-1; text-align:center; color:var(--muted); padding:40px 0;}
+
+/* ---------- Detail ---------- */
+.view{display:none;}
+.view.on{display:block;}
+.detail-top{
+  display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;
+}
+.detail-top h2{font-size:20px;}
+.detail-top .sub{color:var(--muted); font-size:13px;}
+.zoom-wrap{
+  background:var(--panel); border:1px solid var(--border); border-radius:14px;
+  padding:16px; overflow:auto; max-height:78vh; text-align:center;
+}
+.zoom-wrap img{max-height:74vh; max-width:100%; object-fit:contain; border-radius:8px; transition:max-height .2s, max-width .2s;}
+.zoom-wrap.zoomed{overflow:auto;}
+.zoom-wrap.zoomed img{max-height:none; max-width:none; cursor:zoom-out;}
+.zoom-wrap img{cursor:zoom-in;}
+.empty{color:var(--muted);}
+[hidden],.hidden{display:none!important;}
+
+/* ---------- Quiz ---------- */
+.quiz-wrap{display:flex; flex-direction:column; align-items:center; gap:18px;}
+.quiz-progress{width:100%; max-width:560px;}
+.qbar{height:8px; background:var(--panel2); border-radius:99px; overflow:hidden;}
+.qbar .fill{height:100%; background:var(--accent); width:0; transition:width .2s;}
+.qpath{color:var(--muted); font-size:13px; margin-top:6px; text-align:center;}
+.qcard{
+  width:100%; max-width:560px; perspective:1200px; cursor:pointer;
+}
+.qin,.qfront,.qback{width:100%; aspect-ratio:5/5.6; }
+.qin{position:relative; transform-style:preserve-3d; transition:transform .5s;}
+.qin.flip{transform:rotateY(180deg);}
+.qface{
+  position:absolute; inset:0; backface-visibility:hidden; border-radius:16px;
+  border:1px solid var(--border); background:var(--panel); overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.qfront{align-items:center; justify-content:center; gap:10px; text-align:center; padding:20px;}
+.qback{transform:rotateY(180deg);}
+.qback img{width:100%; height:100%; object-fit:contain; background:repeating-conic-gradient(#131a28 0% 25%, #16203233 0% 50%) 0 0/22px 22px;}
+.qbig{font-size:34px; font-weight:800;}
+.qsub{color:var(--muted); font-size:14px; max-width:80%;}
+.qhint{font-size:12px; color:var(--muted); margin-top:6px;}
+.qgrades{display:flex; gap:10px; width:100%; max-width:560px;}
+.qgrades button{flex:1; padding:12px; font-weight:700; border-radius:12px; font-size:14px;}
+.qbad{background:rgba(239,83,80,.16); border:1px solid var(--bbs); color:#ff8a80;}
+.qwarn{background:rgba(255,213,79,.14); border:1px solid var(--sbs); color:#ffe082;}
+.qok{background:rgba(69,204,185,.15); border:1px solid var(--accent2); color:#7ce9df;}
+.qbad:hover{background:rgba(239,83,80,.3);} .qwarn:hover{background:rgba(255,213,79,.28);} .qok:hover{background:rgba(69,204,185,.3);}
+.qlayout{display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:18px; align-items:start;}
+.qsetup{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:12px;}
+.qsetup h3{font-size:16px; margin-bottom:2px;}
+.qsummary{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px; text-align:center; width:100%; max-width:560px;}
+.qsummary .big{font-size:40px; font-weight:800; color:var(--accent);}
+.qsummary .num{display:inline-block; min-width:70px; padding:8px 12px; border-radius:10px; background:var(--panel2); margin:6px; border:1px solid var(--border);}
+.qsummary .num b{display:block; font-size:22px;}
+.num.n1{color:#7ce9df;} .num.n2{color:#ffe082;} .num.n3{color:#ff8a80;}
+
+footer{text-align:center; color:var(--muted); font-size:12px; padding:30px 20px 40px;}
+kbd{background:var(--panel2); border:1px solid var(--border); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font-size:11px; font-family:inherit;}
+@media (max-width:760px){ .qlayout{grid-template-columns:1fr;} .qbig{font-size:26px;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Preflop<span>Study</span></div>
+  <span class="badge" id="libCount">0 tablas</span>
+  <div class="spacer"></div>
+  <a class="hbtn" href="./rangos/">🎯 Rangos</a>
+  <button class="hbtn" id="btnQuiz">Entrenar</button>
+  <button class="hbtn" id="btnBrowse">Explorar</button>
+  <button class="hbtn primary" id="btnLoad">Cargar carpeta</button>
+  <input type="file" id="fileInput" webkitdirectory multiple hidden>
+</header>
+
+<main>
+
+  <!-- ===== EXPLORAR ===== -->
+  <div class="view on" id="view-browse">
+    <div class="banner hidden" id="demoBanner">
+      <b>Catálogo no disponible.</b> No se pudo cargar el catálogo de rangos (Universidad), así que se muestran tablas de ejemplo (DEMO).
+      Pulsa <b>"Cargar carpeta"</b> para usar tus rangos en imágenes.
+    </div>
+
+    <div class="filters" id="filters1">
+      <div class="fgroup">
+        <label>Situación</label>
+        <select id="fSit1"></select>
+      </div>
+      <div class="fgroup">
+        <label>Categoría</label>
+        <select id="fCat1"></select>
+      </div>
+      <div class="fgroup" style="flex:1">
+        <label>Buscar</label>
+        <input type="text" id="fQ1" class="search" placeholder="Filtra por nombre… (ej: 3bet, vs, 4bet)">
+      </div>
+      <div class="fgroup">
+        <label>Posición</label>
+        <div class="chips" id="fPos1">
+          <button class="chip on all" data-p="all">Todas</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="gridinfo"><span id="gridCount"></span></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- ===== DETALLE ===== -->
+  <div class="view" id="view-detail">
+    <div class="detail-top">
+      <button id="btnBack">← Volver</button>
+      <button id="btnPrev">‹ Anterior</button>
+      <button id="btnNext">Siguiente ›</button>
+      <div style="flex:1"></div>
+      <div id="detailTitle"></div>
+    </div>
+    <div class="zoom-wrap" id="zoomWrap">
+      <img id="detailImg" alt="tabla">
+    </div>
+    <div style="margin-top:10px; color:var(--muted); font-size:12px; text-align:center;">
+      <kbd>←</kbd> <kbd>→</kbd> navegar · <kbd>Esc</kbd> volver · clic en la imagen para hacer zoom
+    </div>
+  </div>
+
+  <!-- ===== QUIZ ===== -->
+  <div class="view" id="view-quiz">
+    <div id="quizStage" class="qlayout">
+      <div class="qsetup">
+        <h3>Configura el entrenamiento</h3>
+        <div class="fgroup">
+          <label>Situación</label>
+          <select id="fSit2"></select>
+        </div>
+        <div class="fgroup">
+          <label>Categoría</label>
+          <select id="fCat2"></select>
+        </div>
+        <div class="fgroup">
+          <label>Posición</label>
+          <div class="chips" id="fPos2">
+            <button class="chip on all" data-p="all">Todas</button>
+          </div>
+        </div>
+        <div class="fgroup">
+          <label>Nº de tablas</label>
+          <select id="fN">
+            <option value="0">Todas</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer;">
+          <input type="checkbox" id="fWeight" checked> Priorizar las que peor recuerdo
+        </label>
+        <button class="hbtn primary" id="btnStartQuiz" style="margin-top:4px">Comenzar</button>
+      </div>
+      <div style="color:var(--muted); font-size:14px; padding-top:6px;">
+        <h3 style="margin-bottom:8px; color:var(--text);">¿Cómo funciona?</h3>
+        <p style="margin-bottom:8px;">Se te muestra el <b style="color:var(--text)">nombre de la tabla</b> (posición y spot).
+        Intenta recordar de memoria qué rango abre: <i>pares, suited, offsuit…</i></p>
+        <p style="margin-bottom:8px;">Pulsa <b style="color:var(--text)">Mostrar / pulsar espacio</b> para ver la tabla real
+        y compara con la que tenías en la cabeza.</p>
+        <p style="margin-bottom:8px;">Autoevalúate con los tres botones. El programa recuerda tus aciertos y fallos
+        (<b style="color:var(--text)">"Priorizar las que peor recuerdo"</b> repite más las que fallas).</p>
+        <p>Todo el progreso se guarda en tu navegador.<br>
+        Atajos: <kbd>1</kbd> fallada · <kbd>2</kbd> casi · <kbd>3</kbd> clavada · <kbd>Espacio</kbd> voltear.</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>PreflopStudy · herramienta local offline · tus tablas nunca salen de tu equipo · Uso educativo</footer>
+
+<script>
+'use strict';
+/* =========================================================
+   PreflopStudy — herramienta de estudio de rangos preflop
+   ========================================================= */
+
+/* ---------- Constantes ---------- */
+const POS = ['BTN','SB','BB','Otras'];
+const POS_COLORS = { BTN:'#4fc3f7', SB:'#ffd54f', BB:'#ef5350', Otras:'#9575cd' };
+const CAT_COLORS = {
+  '1_Instituto':'#45ccb9','2_Universidad':'#59dfe6','3_Diplomado':'#d1b4ff',
+  '4_Doctorado':'#f7996e','5_Summa Cum Laude':'#f1cc32'
+};
+const KNOWN_SITS = ['Cash','MTT','Spin','3H','HU','vsMTT','Mini-NL'];
+
+/* ---------- Estado ---------- */
+let library = [];          // items con url/fichero
+let catList = [], sitList = [];
+let quizCtx = null;
+const DEFAULTS = { sit:'all', cat:'all', pos:'all', q:'' };
+
+/* persistence */
+const PROG_KEY = 'ps_progress_v1';
+function loadProgress(){ try { return JSON.parse(localStorage.getItem(PROG_KEY)) || {}; } catch(e){ return {}; } }
+function saveProgress(p){ try { localStorage.setItem(PROG_KEY, JSON.stringify(p)); } catch(e){} }
+let PROGRESS = loadProgress();
+
+/* ---------- Utilidades ---------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function cleanName(name){
+  return (name || '')
+    .replace(/\.[a-z0-9]+$/i,'')
+    .replace(/^\d+[_\-\.]?\s*/, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_\-\s]+/g, ' ')
+    .trim();
+}
+function isImage(name){ return /\.(png|jpe?g|gif|webp|bmp)$/i.test(name); }
+
+function parseItem(file, relOverride){
+  const rel = relOverride || (file.webkitRelativePath || file.name);
+  let parts = rel.split('/').filter(Boolean);
+  // Quitar la carpeta raiz que el navegador anade (el nombre de la carpeta elegida),
+  // salvo que esa carpeta inicial sea ya una carpeta de datos (situacion o categoria).
+  const l0 = (parts[0]||'').toLowerCase();
+  const looksData = /^\d/.test(parts[0]||'')
+    || /universidad|instituto|diplomado|doctorado|summa/i.test(parts[0]||'')
+    || KNOWN_SITS.some(s => s.toLowerCase() === l0);
+  if (parts.length > 1 && !looksData) parts = parts.slice(1);
+  const folders = parts.slice(0, parts.length-1);
+  const name = parts[parts.length-1] || file.name;
+  const lower = f => f.toLowerCase();
+
+  let situation = null;
+  const sitFolder = folders.find(f => KNOWN_SITS.some(s => lower(s) === lower(f)));
+  if (sitFolder) situation = sitFolder;
+
+  let category = null;
+  const catFolder = folders.find(f => /universidad|instituto|diplomado|doctorado|summa/i.test(f));
+  if (catFolder) category = catFolder;
+  if (!category){
+    const last = folders[folders.length-1];
+    if (last && (/^\d/.test(last) || /universidad|instituto|diplomado|doctorado|summa/i.test(last))) category = last;
+    if (!category) category = folders.length ? folders[folders.length-1] || 'General' : 'General';
+  }
+
+  let pos = 'Otras';
+  const scan = toks => {
+    let bestIdx = Infinity, out = 'Otras';
+    ['BTN','SB','BB'].forEach(p => { const i = toks.indexOf(p); if (i >= 0 && i < bestIdx){ bestIdx = i; out = p; } });
+    return out;
+  };
+  pos = scan(name.split(/[_\-\s]+/).filter(Boolean));
+  if (pos === 'Otras') pos = scan(folders.join(' ').split(/[_\-\s]+/).filter(Boolean));
+
+  return {
+    file, url: URL.createObjectURL(file),
+    name, rel: rel,
+    title: cleanName(name),
+    folders, situation: situation||'General', category,
+    pos,
+    key: rel.split('/').slice(0,-1).concat([cleanName(name)]).join(' / ')
+  };
+}
+
+function mergedPosColors(){
+  return { BTN:POS_COLORS.BTN, SB:POS_COLORS.SB, BB:POS_COLORS.BB, Otras:POS_COLORS.Otras };
+}
+function catColor(cat){
+  if (CAT_COLORS[cat]) return CAT_COLORS[cat];
+  return '#a899d6';
+}
+
+function filterItems(opts, list){
+  list = list || library;
+  const q = (opts.q||'').toLowerCase().trim();
+  return list.filter(it => {
+    if (opts.sit !== 'all' && it.situation !== opts.sit) return false;
+    if (opts.cat !== 'all' && it.category !== opts.cat) return false;
+    if (opts.pos !== 'all' && it.pos !== opts.pos) return false;
+    if (q && !(it.title+ ' ' + it.category + ' ' + it.situation + ' ' + it.name).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function weightedShuffle(list){
+  const arr = list.slice();
+  const w = arr.map(it => {
+    const p = PROGRESS[it.key] || {};
+    const n = p.n || 0, ok = p.ok || 0, bad = p.bad || 0, c = p.c || 0;
+    let score = ok + c*1.5 + bad*2.5;
+    let conf = 1 + score*0.6;
+    return { it, w: 1/Math.max(0.25, conf) + (bad>0? bad:0) };
+  });
+  const out = [];
+  while (w.length){
+    const tot = w.reduce((s,x)=>s+x.w,0);
+    let r = Math.random()*tot, i = 0;
+    for (; i<w.length; i++){ r -= w[i].w; if (r<=0) break; }
+    i = Math.min(i, w.length-1);
+    out.push(w[i].it); w.splice(i,1);
+  }
+  return out;
+}
+
+/* ---------- IndexedDB (guardar la biblioteca cargada) ---------- */
+const DB_NAME='ps_library', DB_VER=1;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = () => r.result.createObjectStore('lib',{ keyPath:'key' });
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function dbSave(lib){
+  try{
+    const db = await openDB();
+    const tx = db.transaction('lib','readwrite');
+    const st = tx.objectStore('lib');
+    st.clear();
+    lib.forEach(it => st.put({ key:it.key, file:it.file, rel:it.rel, name:it.name }));
+    return new Promise(res => tx.oncomplete = () => res());
+  } catch(e){ return; }
+}
+async function dbLoad(){
+  try{
+    const db = await openDB();
+    const tx = db.transaction('lib','readonly');
+    const req = tx.objectStore('lib').getAll();
+    return new Promise((res,rej)=>{ req.onsuccess=()=>res(req.result||[]); req.onerror=()=>rej(req.error); });
+  } catch(e){ return []; }
+}
+async function dbClear(){
+  try{
+    const db = await openDB();
+    const tx = db.transaction('lib','readwrite');
+    tx.objectStore('lib').clear();
+    return new Promise(res=>tx.oncomplete=()=>res());
+  } catch(e){}
+}
+
+/* ---------- Demo ---------- */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15, 1|a); t=t+Math.imul(t^t>>>7, 61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function drawChart(pos, label, dens){
+  const ranks='AKQJT98765432', cell=34, m=12, n=ranks.length;
+  const size = m*2 + n*cell;
+  const cv = document.createElement('canvas');
+  cv.width=cv.height=size;
+  const x = cv.getContext('2d');
+  x.fillStyle='#101724'; x.fillRect(0,0,size,size);
+  const rng = mulberry32((pos+label).split('').reduce((a,c)=>a+c.charCodeAt(0), 7));
+  for (let r=0;r<n;r++) for (let c=0;c<n;c++){
+    const px = m+c*cell, py = m+r*cell;
+    let raised=false, col='#1b2437', v=rng();
+    if (r===c){ raised = v > (1-dens*0.9-0.15); }
+    else {
+      const up = r<c; // suited
+      const th = 1 - dens*0.7;
+      raised = v > th;
+    }
+    if (raised){
+      if (r===c) col='#e86a9a';
+      else if (r<c) col='#58b7ff';
+      else col='#ffb35c';
+    }
+    x.fillStyle=col;
+    x.fillRect(px, py, cell-2, cell-2);
+    x.strokeStyle='rgba(255,255,255,.06)';
+    x.strokeRect(px+.5, py+.5, cell-3, cell-3);
+  }
+  x.fillStyle='#dfe7f5'; x.font='600 13px Segoe UI, sans-serif'; x.textAlign='center';
+  x.fillText(ranks.split('').map(r=>r==='T'?'T':r).join(' '), size/2, m-4);
+  return cv.toDataURL('image/png');
+}
+function makeDemoChart(pos, label, dens){
+  const name = label + '.png';
+  const dataUrl = drawChart(pos, label, dens);
+  const blob = dataUrlToBlob(dataUrl);
+  const file = new File([blob], name, { type:'image/png' });
+  const rel = 'Cash/2_Universidad_DEMO/' + label + '.png';
+  return parseItem(file, rel);
+}
+function dataUrlToBlob(d){
+  const parts = d.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const bin = atob(parts[1]);
+  const arr = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr], {type:mime});
+}
+
+const DEMO_SET = [
+  ['BTN','01_BTN_2b_open',.75], ['BTN','02_BTN_3b_vs_open',.62],
+  ['SB','03_SB_2b_open',.58],   ['SB','04_SB_3b_vs_open',.40],
+  ['BB','05_BB_def_vs_2b_open',.5], ['BB','06_BB_3b_vs_btn',.42],
+  ['Otras','07_UTG_2b_open',.55],   ['Otras','08_CO_2b_open',.66],
+  ['Otras','09_HJ_2b_open',.60]
+];
+function buildDemoLibrary(){
+  if (library.length) return;
+  library = DEMO_SET.map(([p,l,d]) => makeDemoChart(p,l,d));
+}
+
+/* ---------- Catálogo (rangos reales scrapeados) ---------- */
+function posFromTitle(title){
+  const toks = String(title).split(/[_\-\s]+/).filter(Boolean);
+  let best = 'Otras';
+  ['BTN','SB','BB'].forEach(p => { if (toks.includes(p)) best = p; });
+  return best;
+}
+function dominantAction(lines){
+  const withFold = [];
+  let sum = 0;
+  (lines||[]).forEach(l => { const f = Math.max(0, Number(l.freq)||0); sum += f; withFold.push({ action:l.action, f }); });
+  if (sum < 0.995) withFold.push({ action:'fold', f: 1 - sum });
+  let best = { action:'fold', f:-1 };
+  withFold.forEach(b => { if (b.f > best.f) best = b; });
+  return best;
+}
+const CAT_ACTION_COLORS = {
+  fold:'#283350', call:'#45ccb9', raise:'#ffb35c', '3bet':'#4fc3f7',
+  '4bet':'#ef5350', sqz:'#9575cd', jam:'#e86a9a', default:'#33415c'
+};
+function matrixCanvasURL(matrix){
+  const ranks='AKQJT98765432', cell=28, m=6, n=ranks.length;
+  const mat = m*2 + n*cell, legendH = 50;
+  const size = mat + legendH;
+  const cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  const x = cv.getContext('2d');
+  x.fillStyle='#101724'; x.fillRect(0,0,size,size);
+  x.textAlign='center'; x.textBaseline='middle';
+  for (let r=0;r<n;r++) for (let c=0;c<n;c++){
+    const h = (r===c) ? ranks[r]+ranks[r] : r<c ? ranks[r]+ranks[c]+'s' : ranks[c]+ranks[r]+'o';
+    const px = m + c*cell, py = m + r*cell;
+    const lines = (matrix||{})[h] || [];
+    const dom = dominantAction(lines);
+    const col = CAT_ACTION_COLORS[dom.action] || CAT_ACTION_COLORS.default;
+    x.globalAlpha = Math.max(0.15, Math.min(1, 0.4 + dom.f*0.6));
+    x.fillStyle = col;
+    x.fillRect(px, py, cell-2, cell-2);
+    x.globalAlpha = 1;
+    x.strokeStyle='rgba(255,255,255,.05)';
+    x.strokeRect(px+.5, py+.5, cell-3, cell-3);
+    x.fillStyle='rgba(255,255,255,.94)';
+    x.font = h.length === 3 ? '700 8px Segoe UI, sans-serif' : '700 8px Segoe UI, sans-serif';
+    x.fillText(h, px + (cell-2)/2, py + cell*0.38);
+    // tamaño dominante (p. ej. "abrir a 2,2"); si no hay etiqueta -> all-in (JAM/AI)
+    const dline = lines.filter(l => l.freq > 0)
+      .sort((a,b) => b.freq - a.freq)[0];
+    const sz = dom.action !== 'fold' && dline ? (dline.tag && dline.tag.trim() || (dline.action==='jam' || dline.action==='allin' ? 'AI' : '')) : '';
+    if (sz){
+      x.fillStyle = 'rgba(10,14,22,.92)';
+      const tw = x.measureText(sz).width;
+      const bw = Math.min(cell-2, tw + 10), bh = 10;
+      x.fillRect(px + (cell-2-bw)/2, py + cell*0.62, bw, bh);
+      x.fillStyle = '#ffd97a';
+      x.font = '700 7px Consolas, monospace';
+      x.fillText(sz, px + (cell-2)/2, py + cell*0.62 + bh/2);
+    } else if (dom.action === 'fold'){
+      x.globalAlpha = 1;
+    }
+  }
+  // leyenda (colores + nota all-in)
+  const legendY = mat + 6;
+  const entries = [['fold','Fold'],['call','Call'],['raise','Open/Raise'],['3bet','3bet'],['4bet','4bet'],['sqz','Squeeze'],['jam','All-in'],['default','Borde']];
+  let lx = 8;
+  x.textAlign='left'; x.textBaseline='middle';
+  entries.forEach(([a,lab]) => {
+    const col = CAT_ACTION_COLORS[a] || CAT_ACTION_COLORS.default;
+    const w = x.measureText(lab).width + 14;
+    if (lx + w > size - 4){ lx = 8; }
+    x.fillStyle = col; x.fillRect(lx, legendY, 10, 10);
+    x.fillStyle = 'rgba(255,255,255,.9)';
+    x.font = '600 10px Segoe UI, sans-serif';
+    x.fillText(lab, lx + 14, legendY + 5);
+    lx += w + 6;
+  });
+  x.fillStyle = '#ffd97a';
+  x.font = '600 9px Segoe UI, sans-serif';
+  x.fillText('Sin número = all-in', m, size - 4);
+  return cv.toDataURL('image/png');
+}
+async function loadCatalog(){
+  try{
+    const res = await fetch('./rangos/out/edu_import.json', { cache:'no-store' });
+    if (!res.ok) return false;
+    const json = await res.json();
+    const ranges = json.ranges || {};
+    const items = [];
+    Object.entries(ranges).forEach(([id, r]) => {
+      if (!r.matrix || !Object.keys(r.matrix).length) return;
+      const title = r.label || id;
+      items.push({
+        file:null, url: matrixCanvasURL(r.matrix),
+        name: title + '.png', title,
+        rel: 'Catalogo/'+r.cat+'/'+title+'.png',
+        folders:['Catalogo', r.cat], situation:'Catalogo', category:r.cat,
+        pos: posFromTitle(title),
+        key: 'Catalogo / '+r.cat+' / '+title, id
+      });
+    });
+    if (!items.length) return false;
+    library = items;
+    $('#libCount').textContent = library.length + ' tablas';
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- Carga desde disco / índice ---------- */
+function acceptFiles(fileList){
+  const files = [...fileList].filter(f => isImage(f.name));
+  if (!files.length) return false;
+  library.forEach(it => URL.revokeObjectURL(it.url));
+  library = files.map(f => parseItem(f));
+  dbSave(library);
+  afterLoad();
+  return true;
+}
+async function restoreLibrary(){
+  const recs = await dbLoad();
+  if (recs.length){
+    library.forEach(it=>URL.revokeObjectURL(it.url));
+    library = recs.map(r => parseItem(r.file, r.rel));
+    afterLoad();
+    return true;
+  }
+  return false;
+}
+function afterLoad(){
+  rebuildFilterOptions();
+  renderGrid();
+  const demo = library.length && library.some(it => it.folders.join('/').includes('DEMO'));
+  $('#demoBanner').classList.toggle('hidden', !demo || library.length===0);
+  $('#libCount').textContent = library.length + ' tablas';
+}
+function rebuildFilterOptions(){
+  catList = [...new Set(library.map(it=>it.category))].sort();
+  sitList = [...new Set(library.map(it=>it.situation))].sort();
+  ['1','2'].forEach(n => {
+    const s = $('#fSit'+n), c = $('#fCat'+n);
+    const oldS = s.value, oldC = c.value;
+    s.innerHTML = '<option value="all">Todas</option>' + sitList.map(v=>`<option>${esc(v)}</option>`).join('');
+    c.innerHTML = '<option value="all">Todas</option>' + catList.map(v=>`<option>${esc(v)}</option>`).join('');
+    if ([...s.options].some(o=>o.value===oldS)) s.value=oldS;
+    if ([...c.options].some(o=>o.value===oldC)) c.value=oldC;
+    if (s.value==='all' && DEFAULTS.sit!=='all' && [...s.options].some(o=>o.value===DEFAULTS.sit)) s.value=DEFAULTS.sit;
+  });
+  updateSitDefaults();
+  renderGrid();
+}
+function updateSitDefaults(){
+  // Si se han cargado tablas reales, situacion por defecto = Cash si existe
+  if (!localStorage.getItem('ps_sit_preset')){
+    if (sitList.includes('Cash')) DEFAULTS.sit='Cash';
+    localStorage.setItem('ps_sit_preset','1');
+  }
+}
+function currentFilters(n){
+  return {
+    sit: $('#fSit'+n).value, cat: $('#fCat'+n).value,
+    pos: selectedPos(n), q: $('#fQ'+n) ? $('#fQ'+n).value || '' : ''
+  };
+}
+function selectedPos(n){
+  const c = $('#fPos'+n).querySelector('.chip.on');
+  return c ? c.dataset.p : 'all';
+}
+
+/* ---------- Vistas ---------- */
+function showView(name){
+  ['browse','detail','quiz'].forEach(v => $('#view-'+v).classList.toggle('on', v===name));
+  document.body.scrollTop = 0;
+}
+function gotoQuizSetup(){
+  quizCtx = null;
+  $('#quizStage').classList.add('qlayout');
+  bindQuizSetup();
+  setupQuiz();
+  showView('quiz');
+}
+$('#btnBrowse').onclick = () => { showView('browse'); renderGrid(); };
+$('#btnQuiz').onclick = gotoQuizSetup;
+
+/* ---------- Grid (explorar) ---------- */
+function renderGrid(){
+  const f = currentFilters(1);
+  const items = filterItems(f);
+  $('#gridCount').textContent = items.length + ' tabla' + (items.length===1?'':'s');
+  const g = $('#grid');
+  if (!items.length){
+    g.innerHTML = '<div class="empty">No hay tablas que coincidan con estos filtros.</div>';
+    return;
+  }
+  g.innerHTML = items.map(it => `
+    <div class="card" data-k="${esc(it.key)}">
+      <div class="thumb"><img src="${it.url}" alt="${esc(it.title)}" loading="lazy"></div>
+      <div class="meta">
+        <div class="t"><span class="posdot" style="background:${mergedPosColors()[it.pos]}"></span>${esc(it.title)}</div>
+        <div class="sub">${esc([it.situation, it.category].join(' · '))}</div>
+      </div>
+    </div>`).join('');
+}
+$('#grid').addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  openDetail(card.dataset.k);
+});
+
+/* ---------- Detalle ---------- */
+let detailItems = [], detailIdx = 0;
+function openDetail(key){
+  detailItems = filterItems(currentFilters(1));
+  detailIdx = detailItems.findIndex(it => it.key === key);
+  if (detailIdx < 0) detailIdx = 0;
+  showView('detail');
+  renderDetail();
+}
+function renderDetail(){
+  if (!detailItems.length) return;
+  const it = detailItems[detailIdx];
+  $('#detailImg').src = it.url;
+  $('#detailImg').onclick = () => $('#zoomWrap').classList.toggle('zoomed');
+  $('#detailTitle').innerHTML =
+    `<div style="text-align:right"><span class="posdot" style="background:${mergedPosColors()[it.pos]}"></span>
+     <b>${esc(it.title)}</b><div class="sub" style="color:var(--muted);font-size:12px">${esc(it.category)} · ${esc(it.situation)}</div>
+     <div style="color:var(--muted);font-size:12px;margin-top:4px">${detailIdx+1} / ${detailItems.length}</div></div>`;
+}
+$('#btnBack').onclick = () => { showView('browse'); renderGrid(); };
+$('#btnPrev').onclick = () => { if(detailItems.length){ detailIdx=(detailIdx-1+detailItems.length)%detailItems.length; renderDetail(); } };
+$('#btnNext').onclick = () => { if(detailItems.length){ detailIdx=(detailIdx+1)%detailItems.length; renderDetail(); } };
+
+/* teclado global */
+document.addEventListener('keydown', e => {
+  const quizOn = $('#view-quiz').classList.contains('on');
+  const detOn = $('#view-detail').classList.contains('on');
+  if (e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA') return;
+  if (quizOn && quizCtx && !quizCtx.done){ quizKey(e); return; }
+  if (detOn){
+    if (e.key==='ArrowLeft'){ $('#btnPrev').click(); }
+    else if (e.key==='ArrowRight'){ $('#btnNext').click(); }
+    else if (e.key==='Escape'){ $('#btnBack').click(); }
+  }
+});
+
+/* ---------- Filtros ---------- */
+function bindPosChips(){
+  [1,2].forEach(n => {
+    const box = $('#fPos'+n);
+    box.innerHTML = '<button class="chip on all" data-p="all">Todas</button>' +
+      POS.map((p,i) => {
+        const cls = ['bbtn','sbtn','obtn','ebtn'][i];
+        return `<button class="chip ${cls}" data-p="${p}">${PosLabel(p)}</button>`;
+      }).join('');
+    box.addEventListener('click', e => {
+      const b = e.target.closest('.chip');
+      if (!b) return;
+      box.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+      b.classList.add('on');
+      if (n===1) renderGrid();
+      else setupQuiz();
+    });
+  });
+}
+function PosLabel(p){ return p==='Otras' ? 'Otras (UTG/MP/CO…)' : p; }
+
+/* listeners de filtros (explorar) */
+['fSit1','fCat1'].forEach(id => $('#'+id).addEventListener('change', renderGrid));
+$('#fQ1').addEventListener('input', renderGrid);
+
+/* ---------- Quiz ---------- */
+function setupQuiz(){
+  rebuildFilterOptions();
+  const pool = filterItems(currentFilters(2));
+  const total = pool.length;
+  const canStart = total > 0;
+  const btn = $('#btnStartQuiz');
+  btn.textContent = canStart ? 'Comenzar (' + total + ' tablas)' : 'No hay tablas con ese filtro';
+  btn.disabled = !canStart;
+}
+$('#btnStartQuiz').onclick = startQuizHandler;
+function renderQuizCard(){
+  const c = quizCtx;
+  const it = c.list[c.idx];
+  $('#qIdx').textContent = c.idx+1;
+  $('#qCounts').textContent = c.cnt.ok + ' \u2705 ' + c.cnt.warn + ' \uD83D\uDFE1 ' + c.cnt.bad + ' \u274C';
+  $('#qName').textContent = it.title;
+  $('#qin').className = 'qin';
+  $('#qin').innerHTML = `
+    <div class="qface qfront">
+      <div class="qbig">${esc(it.title)}</div>
+      <div class="qsub">${esc(it.situation + ' · ' + it.category)}</div>
+      <div class="qhint">Intenta recordar el rango… pulsa para voltear</div>
+    </div>
+    <div class="qface qback"><img src="${it.url}" alt=""></div>`;
+  $('#qin').onclick = flip;
+  $('#qgrades').style.opacity = '.35';
+  $('#qgrades').style.pointerEvents = 'none';
+  $('#qgrades').querySelectorAll('button').forEach(b =>
+    b.onclick = e => grade(e.currentTarget.dataset.g));
+  c.revealed = false;
+}
+function flip(){
+  const c = quizCtx; if (!c || c.done) return;
+  $('#qin').classList.toggle('flip');
+  c.revealed = !c.revealed;
+  if (c.revealed){
+    $('#qgrades').style.opacity = '1';
+    $('#qgrades').style.pointerEvents = 'auto';
+  } else {
+    $('#qgrades').style.opacity = '.35';
+    $('#qgrades').style.pointerEvents = 'none';
+  }
+}
+function grade(g){
+  const c = quizCtx; if (!c || !c.revealed || c.done) return;
+  c.cnt[g]++;
+  const it = c.list[c.idx];
+  const p = PROGRESS[it.key] = PROGRESS[it.key] || { n:0, ok:0, warn:0, bad:0 };
+  p.n++; p[g]++;
+  saveProgress(PROGRESS);
+  c.idx++;
+  if (c.idx >= c.list.length) finishQuiz();
+  else renderQuizCard();
+}
+function finishQuiz(){
+  const c = quizCtx;
+  const n = c.list.length;
+  c.done = true;
+  const pct = Math.round((c.cnt.ok + c.cnt.warn*0.5)/n*100);
+  const set = c.list.map(it => {
+    const p = PROGRESS[it.key] || {};
+    return `<div class="num n${p.bad?3: p.warn>p.ok?2:1}"><b>${p.ok??0}</b>${esc(it.title)}</div>`;
+  }).join('');
+  $('#quizStage').innerHTML = `
+    <div class="qsummary">
+      <div class="big">${pct}%</div>
+      <div style="color:var(--muted); margin:6px 0 18px;">${n} tablas · ${c.cnt.ok} clavadas · ${c.cnt.warn} casi · ${c.cnt.bad} no sabías</div>
+      <button class="hbtn primary" id="again" style="margin-right:8px">Repetir sesión</button>
+      <button class="hbtn" id="back2">Otra configuración</button>
+      <div style="margin-top:18px; display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+        ${set}
+      </div>
+    </div>`;
+  $('#again').onclick = () => startQuizWith([...quizCtx.list]);
+  $('#back2').onclick = gotoQuizSetup;
+}
+function quizKey(e){
+  const c = quizCtx;
+  if (e.code==='Space'){ e.preventDefault(); flip(); }
+  else if (e.key==='1') grade('bad');
+  else if (e.key==='2') grade('warn');
+  else if (e.key==='3') grade('ok');
+}
+
+let quizSetupHTML = '';
+function bindQuizSetup(){
+  $('#quizStage').innerHTML = quizSetupHTML;
+  bindPosChips();
+  ['fSit2','fCat2'].forEach(id => $('#'+id).addEventListener('change', setupQuiz));
+  $('#fWeight').addEventListener('change', setupQuiz);
+  $('#btnStartQuiz').onclick = startQuizHandler;
+}
+
+/* ---------- Definimos el HTML del setup una vez ---------- */
+function captureSetupHTML(){
+  quizSetupHTML = $('#quizStage').innerHTML;
+}
+function startQuizWith(pool){
+  quizCtx = { list:pool, idx:0, revealed:false, done:false, cnt:{ ok:0, warn:0, bad:0 } };
+  $('#quizStage').classList.remove('qlayout');
+  $('#quizStage').innerHTML = `
+    <div class="quiz-wrap">
+      <div class="quiz-progress">
+        <div class="qbar"><div class="fill"></div></div>
+        <div class="qpath"><span id="qIdx">1</span> / ${pool.length} · <span id="qCounts">0 \u2705 0 \uD83D\uDFE1 0 \u274C</span> · <span id="qName"></span></div>
+      </div>
+      <div class="qcard"><div class="qin" id="qin"></div></div>
+      <div class="qgrades" id="qgrades" style="opacity:.35; pointer-events:none;">
+        <button class="qbad" data-g="bad">1 · No la sabía</button>
+        <button class="qwarn" data-g="warn">2 · Casi</button>
+        <button class="qok" data-g="ok">3 · ¡Clavada!</button>
+      </div>
+    </div>`;
+  renderQuizCard();
+}
+function startQuizHandler(){
+  const n = parseInt($('#fN').value, 10) || 0;
+  let pool = filterItems(currentFilters(2));
+  if (!pool.length) return;
+  if ($('#fWeight').checked) pool = weightedShuffle(pool);
+  else pool = pool.sort(() => Math.random()-0.5);
+  if (n>0 && pool.length>n) pool = pool.slice(0, n);
+  startQuizWith(pool);
+}
+
+/* ---------- Carga de carpeta ---------- */
+$('#btnLoad').onclick = () => $('#fileInput').click();
+$('#fileInput').addEventListener('change', e => {
+  const ok = acceptFiles(e.target.files);
+  if (ok) showView('browse');
+  e.target.value = '';
+});
+
+/* ---------- Init ---------- */
+async function init(){
+  bindPosChips();
+  // 1) biblioteca de imágenes guardada por el usuario (si la hay)
+  const restored = await restoreLibrary();
+  if (!restored){
+    // 2) catálogo real scrapeado (Universidad) — el "bueno"
+    const ok = await loadCatalog();
+    if (!ok){
+      // 3) último recurso: DEMO
+      buildDemoLibrary();
+      $('#demoBanner').classList.remove('hidden');
+    }
+  }
+  afterLoad();
+  captureSetupHTML();
+  bindQuizSetup();
+  setupQuiz();
+  renderGrid();
+}
+init();
+</script>
+</body>
+</html>

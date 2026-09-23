@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f1420">
+<meta name="description" content="PreflopStudy Rangos &#183; editor de rangos preflop y flashcards con mezclas y límites">
+<title>PreflopStudy Rangos</title>
+<link rel="manifest" href="./manifest.json?v=15">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./css/app.css?v=15">
+</head>
+<body>
+
+<header>
+  <div class="logo">Preflop<span>Study</span></div>
+  <span class="badge">Rangos</span>
+  <div class="spacer"></div>
+  <a href="../index.html" class="hbtn">Visor imágenes</a>
+</header>
+
+<main>
+
+  <!-- ===== RANGOS ===== -->
+  <div class="view on" id="view-rangos">
+    <div class="fgroup">
+      <input type="text" id="rangeSearch" placeholder="Buscar situacion... (ej: vs 3Bet, OR 30bb)">
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <button class="hbtn" id="btnExport" title="Descargar copia de seguridad">Exportar JSON</button>
+      <button class="hbtn" id="btnImport" title="Importar copia de seguridad">Importar</button>
+      <input type="file" id="importFile" accept=".json" hidden>
+      <div class="muted" style="font-size:12px; line-height:1.5">Toca una situación para editar su matriz 13 &#215; 13 (varias acciones por mano con %).</div>
+    </div>
+    <div id="rangeList"></div>
+  </div>
+
+  <!-- ===== EDITOR ===== -->
+  <div class="view" id="view-editor">
+    <div class="ed-head">
+      <button id="btnBackEd">&#8592; Rangos</button>
+      <div class="title">
+        <div id="edTitle"></div>
+        <div class="muted" style="font-size:12px" id="edSub"></div>
+      </div>
+      <span class="badge" id="edSizing"></span>
+    </div>
+
+    <div class="ed-actions" id="edActions"></div>
+
+    <div class="card" style="padding:10px">
+      <div class="matrix-wrap">
+        <table class="matrix" id="matrix"></table>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--fold)"></i>Fold</span>
+        <span><i style="background:var(--call)"></i>Call</span>
+        <span><i style="background:var(--raise)"></i>Raise</span>
+        <span><i style="background:var(--bet3)"></i>3bet</span>
+        <span><i style="background:var(--bet4)"></i>4bet</span>
+        <span><i style="background:var(--sqz)"></i>SQZ</span>
+        <span><i style="background:var(--jam)"></i>Jam</span>
+        <span><i style="background:repeating-linear-gradient(45deg,#4fc3f7 0 4px,#2a6f8f 4px 8px)"></i>All-in</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Notación de texto <span class="muted" style="font-weight:400; font-size:12px">(se sincroniza con la matriz)</span></h3>
+      <p class="muted" style="font-size:12px; margin-bottom:8px">
+        Formato: <code style="color:var(--accent)">A9s: 3bet all-in 50%, 3bet no allin 50%</code> ·
+        <code style="color:var(--accent)">88-77: call 100%</code> · <code style="color:var(--accent)">A2s+: raise 100%</code>
+      </p>
+      <textarea id="notacion" class="notacion" spellcheck="false"></textarea>
+      <div style="margin-top:8px; display:flex; gap:8px">
+        <button class="hbtn primary" id="btnApplyNot">Aplicar notación</button>
+        <button class="hbtn" id="btnResetEd">Restablecer rango</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SIZINGS ===== -->
+  <div class="view" id="view-sizings">
+    <div class="banner">Configura el tamaño en BB de cada situación según el stack. Modo <b>bb</b> = tamaño fijo en BB ·
+      modo <b>x</b> = multiplicador del open raise. Las filas <b>All-in</b> representan stack efectivo (no edite el modo).</div>
+    <div class="card" style="padding:8px">
+      <div style="overflow-x:auto"><table class="siz" id="sizingsTable"></table></div>
+      <div class="muted" id="sizingsTip" style="font-size:12px; margin-top:8px"></div>
+    </div>
+    <button class="hbtn" id="btnResetSiz">Restablecer sizings</button>
+  </div>
+
+  <!-- ===== ESTUDIAR ===== -->
+  <div class="view" id="view-estudiar">
+    <div id="studyStage"></div>
+  </div>
+
+  <!-- ===== PROGRESO ===== -->
+  <div class="view" id="view-progreso">
+    <div class="row" style="margin-bottom:14px" id="progGlobal"></div>
+    <div class="card">
+      <h3>Por situación</h3>
+      <div id="progList"></div>
+    </div>
+    <button class="hbtn" id="btnResetStats" style="color:#ff8a80">Borrar progreso</button>
+  </div>
+
+</main>
+
+<nav class="bottom">
+  <button data-view="rangos" class="on"><span class="ic">&#127919;</span>Rangos</button>
+  <button data-view="estudiar"><span class="ic">&#128214;</span>Estudiar</button>
+  <button data-view="sizings"><span class="ic">&#128207;</span>Sizings</button>
+  <button data-view="progreso"><span class="ic">&#128200;</span>Progreso</button>
+</nav>
+
+<div id="toast"></div>
+
+<div class="sheet-back" id="sheetBack"></div>
+<div class="sheet" id="sheet">
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+    <h3>Mano</h3>
+    <span class="hand" id="sheetHand"></span>
+    <div class="spacer" style="flex:1"></div>
+    <button id="sheetClose">&#10005;</button>
+  </div>
+  <p class="muted" style="font-size:12px; margin-bottom:10px">Varias acciones por mano con porcentajes (ej: 3bet all-in 50% / 3bet no allin 50%).</p>
+  <div class="chips" id="sheetQuick" style="margin-bottom:12px"></div>
+  <div id="sheetLines"></div>
+  <datalist id="tagList">
+    <option value="all-in"></option>
+    <option value="no allin"></option>
+    <option value="small"></option>
+    <option value="over"></option>
+    <option value="polar"></option>
+    <option value="linear"></option>
+  </datalist>
+  <button class="hbtn" id="sheetAddLine" style="margin:4px 0 12px">+ Añadir línea</button>
+  <div class="sum-row ok" id="sheetSumRow">
+    <span class="muted">Total</span><b id="sheetSum">0%</b>
+  </div>
+  <div class="muted" id="sheetRest" style="font-size:12px; margin-bottom:10px"></div>
+  <div style="display:flex; gap:8px">
+    <button class="hbtn" id="sheetClear" style="color:#ff8a80">Vaciar mano</button>
+    <button class="hbtn primary" id="sheetSave" style="flex:1">Guardar mano</button>
+  </div>
+</div>
+
+<style>
+#toast{
+  position:fixed; bottom:84px; left:50%; transform:translateX(-50%); z-index:200;
+  background:var(--panel); border:1px solid var(--accent); color:var(--text);
+  padding:10px 18px; border-radius:10px; font-size:13px; max-width:90%;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+#toast.on{opacity:1;}
+.qanswer-info .hidden{display:none;}
+</style>
+
+<script src="./js/hands.js?v=15"></script>
+<script src="./js/ranges.js?v=15"></script>
+<script src="./js/sizings.js?v=15"></script>
+<script src="./js/data.js?v=15"></script>
+<script src="./js/scenario.js?v=15"></script>
+<script src="./js/modes.js?v=15"></script>
+<script src="./js/stats.js?v=15"></script>
+<script src="./js/study.js?v=15"></script>
+<script src="./js/editor.js?v=15"></script>
+<script src="./js/app.js?v=15"></script>
+</body>
+</html>
